@@ -239,7 +239,7 @@ class Rec:
     def info_rec(self):
         return self.pid, self.name, self.file_name, self.file_source, self.time, self.status
 
-
+#Todo: Gerer le cron via falcon et python
 class Upload:
         def __init__(self):
             self.setup = Setup()
