@@ -10,12 +10,6 @@ class Setup:
     def __init__(self):
         self.dbdir = '../db'
         self.dburl = '../db/simdb.db'
-        self.status = False
-        self.message = None
-        self.login = None
-        self.password = None
-        self.directory = None
-        self.url_nextcloud = None
 
     def create_db(self):
         # Create file and directory
@@ -27,7 +21,18 @@ class Setup:
         # Create table of db
         con = sqlite3.connect(self.dburl)
         cur = con.cursor()
-        cur.execute('''CREATE TABLE IF NOT EXISTS setup(
+        cur.execute('''CREATE TABLE IF NOT EXISTS setup_simcloud(
+                id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+                rotate INTEGER,
+                framerate INTEGER,
+                width INTEGER,
+                height INTEGER,
+                profile TEXT,
+                level TEXT,
+                bitrate_vid INTEGER,
+                bitrate_aud INTEGER
+            )''')
+        cur.execute('''CREATE TABLE IF NOT EXISTS setup_simcam(
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                 login TEXT,
                 password TEXT,
@@ -37,25 +42,45 @@ class Setup:
         con.commit()
         con.close()
 
+    def setup_simcam(self, rotate, framerate, width, height, profile, level, bitrate_vid, bitrate_aud):
+        status = True
+        message = "Configuration camera saved successfully"
+        try:
+            self.create_db()
 
-    def setup_simcam(self, login, password, directory, url_nextcloud):
-        self.login = login
-        self.password = password
-        self.directory = directory
-        self.url_nextcloud = url_nextcloud
-        self.status = True
-        self.message = "Configuration saved successfully"
+            con = sqlite3.connect(self.dburl)
+            cur = con.cursor()
+            cur.execute("SELECT id FROM setup_simcam")
+            data = cur.fetchone()
+            if data is not None:
+                print('Exist')
+                cur.execute("DELETE FROM setup_simcam")
+                con.commit()
+            donnees = (rotate, framerate, width, height, profile, level, bitrate_vid, bitrate_aud)
+            cur.execute("INSERT INTO setup (rotate, framerate, width, height, profile, level, bitrate_vid, bitrate_aud) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", donnees)
+            con.commit()
+            con.close()
+        except sqlite3.Error as error:
+            print("Failed to insert data into sqlite table", error)
+            message = "Failed to insert data into sqlite table : " + str(error)
+            status = False
+        return status, message
+
+
+    def setup_simcloud(self, login, password, directory, url_nextcloud):
+        status = True
+        message = "Configuration cloud saved successfully"
 
         try:
             self.create_db()
 
             con = sqlite3.connect(self.dburl)
             cur = con.cursor()
-            cur.execute("SELECT id FROM setup")
+            cur.execute("SELECT id FROM setup_simcloud")
             data = cur.fetchone()
             if data is not None:
                 print('Exist')
-                cur.execute("DELETE FROM setup")
+                cur.execute("DELETE FROM setup_simcloud")
                 con.commit()
             donnees = (login, password, directory, url_nextcloud)
             cur.execute("INSERT INTO setup (login, password, directory, url_nextcloud) VALUES (?, ?, ?, ?)", donnees)
@@ -63,11 +88,11 @@ class Setup:
             con.close()
         except sqlite3.Error as error:
             print("Failed to insert data into sqlite table", error)
-            self.message = "Failed to insert data into sqlite table : " + str(error)
-            self.status = False
-        return self.status, self.message
+            message = "Failed to insert data into sqlite table : " + str(error)
+            status = False
+        return status, message
 
-    def get_setup(self):
+    def get_setup_simcloud(self):
         try:
             self.create_db()
             con = sqlite3.connect(self.dburl)
@@ -78,18 +103,42 @@ class Setup:
             con.close()
         except sqlite3.Error as error:
             print("Failed to insert data into sqlite table", error)
-            self.message = "Failed to insert data into sqlite table : " + str(error)
+            message = "Failed to insert data into sqlite table : " + str(error)
             status = 500
-            return status, self.message
+            return status, message
 
         # true = enregistrement en cours / false = pas d'enregistrement en cours
         if data is not None:
             status = 200
             return status, data[1], data[2], data[3], data[4]
         else:
-            self.message = "Setup not found"
+            message = "Setup cloud not found"
             status = 404
-            return status, self.message
+            return status, message
+
+    def get_setup_simcam(self):
+        try:
+            self.create_db()
+            con = sqlite3.connect(self.dburl)
+            cur = con.cursor()
+            cur.execute("SELECT * FROM setup")
+            data = cur.fetchone()
+            con.commit()
+            con.close()
+        except sqlite3.Error as error:
+            print("Failed to insert data into sqlite table", error)
+            message = "Failed to insert data into sqlite table : " + str(error)
+            status = 500
+            return status, message
+
+        # true = enregistrement en cours / false = pas d'enregistrement en cours
+        if data is not None:
+            status = 200
+            return status, data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8]
+        else:
+            message = "Setup camera not found"
+            status = 404
+            return status, message
 
 class Rec:
     def __init__(self):
@@ -103,13 +152,18 @@ class Rec:
         self.name = None
         self.time = None
         self.time_limit = None
-        self.login = None
-        self.password = None
-        self.directory = None
-        self.url_nextcloud = None
 
 
     def rec_video(self, name, time_limit):
+        data_setup = self.setup.get_setup_simcam()
+        rotate = data_setup[1]
+        framerate = data_setup[2]
+        width = data_setup[3]
+        height = data_setup[4]
+        profile = data_setup[5]
+        level = data_setup[6]
+        bitrate_vid = data_setup[7]
+        bitrate_aud = data_setup[8]
         # Déclaration de variable
         self.time = datetime.datetime.now().timestamp()
         timestamp = datetime.datetime.now()
@@ -128,7 +182,7 @@ class Rec:
         self.time_limit = time_limit
 
         # Démarrage VLC
-        cmdbase = 'libcamera-vid --rotation 180 --nopreview -t ' + self.time_limit + ' --codec libav -o ' + self.file_source + ' --framerate 25 --width 1920 --height 1080 --profile high --level 4.2 --bitrate 2500000 -n --libav-audio --audio-source alsa --audio-device default --audio-bitrate 128000'
+        cmdbase = 'libcamera-vid --rotation ' + rotate + ' --nopreview -t ' + self.time_limit + ' --codec libav -o ' + self.file_source + ' --framerate ' + framerate + ' --width ' + width + ' --height ' + height + ' --profile ' + profile + ' --level ' + level + ' --bitrate ' + bitrate_vid + ' -n --libav-audio --audio-source alsa --audio-device default --audio-bitrate ' + bitrate_aud + ''
         process = subprocess.Popen(cmdbase, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True,
                                    preexec_fn=os.setsid)
         # Stockage du PID
@@ -140,12 +194,12 @@ class Rec:
         return self.status, self.pid
 
     def unrec_video(self):
-        data_setup = self.setup.get_setup()
+        data_setup = self.setup.get_setup_simcloud()
 
-        self.login = data_setup[1]
-        self.password = data_setup[2]
-        self.directory = data_setup[3]
-        self.url_nextcloud = data_setup[4]
+        login = data_setup[1]
+        password = data_setup[2]
+        directory = data_setup[3]
+        url_nextcloud = data_setup[4]
         datetime.datetime.now().timestamp()
         timestamp = datetime.datetime.now()
         annee = timestamp.strftime('%Y')
@@ -158,11 +212,11 @@ class Rec:
 
         # Use owncloud library for create dir of file mp4
         try:
-            nc = nextcloud_client.Client(self.url_nextcloud)
-            nc.login(self.login, self.password)
+            nc = nextcloud_client.Client(url_nextcloud)
+            nc.login(login, password)
 
             try:
-                nc.mkdir(self.directory + annee + '')
+                nc.mkdir(directory + annee + '')
             except:
                 print("Directory Exist")
 
@@ -191,7 +245,7 @@ class Upload:
             self.setup = Setup()
 
         def upload_file(self):
-            data_setup = self.setup.get_setup()
+            data_setup = self.setup.get_setup_simcloud()
 
             login = data_setup[1]
             password = data_setup[2]
