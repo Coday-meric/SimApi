@@ -1,10 +1,10 @@
 import json
 import falcon
-from utils import Setup
+from utils import Setup, Rec
 # from utils import Upload, Rec, Preview
 
 setup = Setup()
-# rec = Rec()
+rec = Rec()
 # preview = Preview()
 # upload = Upload()
 
@@ -15,13 +15,27 @@ class SetupSimCam(object):
         login = data['login']
         password = data['password']
         directory = data['directory']
-        res = setup.setup_simcam(login, password, directory)
+        url_nextcloud = data['url_nextcloud']
+        res = setup.setup_simcam(login, password, directory, url_nextcloud)
         if res[0]:
-            resp.status = falcon.HTTP_200
-            resp.text = json.dumps({"status": res[0], "message": res[1]})
+            resp.status = falcon.HTTP_201
+            resp.text = json.dumps({"message": res[1]})
         else:
             resp.status = falcon.HTTP_500
-            resp.text = json.dumps({"status": res[0], "message": res[1]})
+            resp.text = json.dumps({"message": res[1]})
+
+    def on_get(self, req, resp):
+        """Handles GET requests"""
+        res = setup.get_setup()
+        if res[0] == 200:
+            resp.status = falcon.HTTP_200
+            resp.text = json.dumps({"login": res[1], "password": res[2], "directory": res[3], "url_nextcloud": res[4]})
+        elif res[0] == 404:
+            resp.status = falcon.HTTP_404
+            resp.text = json.dumps({"message": res[1]})
+        else:
+            resp.status = falcon.HTTP_500
+            resp.text = json.dumps({"message": res[1]})
 
 # class RunRecSession(object):
 #     def on_post(self, req, resp):
@@ -38,12 +52,12 @@ class SetupSimCam(object):
 #             resp.text = json.dumps({"status": res[1]})
 #
 #
-# class StopRecSession(object):
-#     def on_get(self, req, resp):
-#         """Handles GET requests"""
-#         path = rec.unrec_video()
-#         resp.status = falcon.HTTP_200  # This is the default status
-#         resp.text = json.dumps({"path": path})
+class StopRecSession(object):
+    def on_get(self, req, resp):
+        """Handles GET requests"""
+        path = rec.unrec_video()
+        resp.status = falcon.HTTP_200  # This is the default status
+        resp.text = json.dumps({"path": path})
 #
 #
 # class StatusRecSession(object):
@@ -88,18 +102,18 @@ class SetupSimCam(object):
 app = falcon.App()
 
 # Resources are represented by long-lived class instances
-set_setup = SetupSimCam()
+my_setup = SetupSimCam()
 # run_rec = RunRecSession()
-# stop_rec = StopRecSession()
+stop_rec = StopRecSession()
 # status_rec = StatusRecSession()
 # upload_file = UploadFile()
 # run_preview = RunPreview()
 # stop_preview = StopPreview()
 
 # things will handle all requests to the '/things' URL path
-app.add_route('/setup', set_setup)
+app.add_route('/setup', my_setup)
 # app.add_route('/rec', run_rec)
-# app.add_route('/unrec', stop_rec)
+app.add_route('/unrec', stop_rec)
 # app.add_route('/status', status_rec)
 # app.add_route('/upload', upload_file)
 # app.add_route('/preview', run_preview)
