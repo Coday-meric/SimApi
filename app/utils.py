@@ -253,13 +253,18 @@ class Upload:
             subprocess.Popen(cmd_upload, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             return True
 
-
+#Todo: Improve preview with http protocole
 class Preview:
     def __init__(self):
+        self.setup = Setup()
         self.pid = None
 
     def run_preview(self):
-        cmdbase = 'libcamera-vid -t 600000 --rotation 180 --width 1920 --height 1080 --codec h264 --inline --listen -o tcp://0.0.0.0:8888'
+        data_setup = self.setup.get_setup_simcam()
+        rotate = data_setup[1]
+        width = data_setup[3]
+        height = data_setup[4]
+        cmdbase = 'libcamera-vid -t 600000 --rotation ' + rotate + ' --width ' + width + ' --height ' + height + ' --codec h264 --inline --listen -o tcp://0.0.0.0:8888'
         process = subprocess.Popen(cmdbase, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True,
                                    preexec_fn=os.setsid)
         self.pid = os.getpgid(process.pid)
