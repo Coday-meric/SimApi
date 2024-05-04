@@ -4,7 +4,6 @@ import signal
 import subprocess
 from pathlib import Path
 import nextcloud_client
-from dotenv import load_dotenv
 import sqlite3
 
 class Setup:
