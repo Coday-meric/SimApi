@@ -249,7 +249,9 @@ class Upload:
 
             login = data_setup[1]
             password = data_setup[2]
-            cmd_upload = 'login="' + login + '" password="' + password + '" bash ../cron/simcron.bash >> ../log/simcron.txt'
+            directory = data_setup[3]
+            url_nextcloud = data_setup[4]
+            cmd_upload = 'login="' + login + '" password="' + password + '" directory="' + directory + '" url_nextcloud="' + url_nextcloud + '" bash ../cron/simcron.bash >> ../log/simcron.txt'
             subprocess.Popen(cmd_upload, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             return True
 

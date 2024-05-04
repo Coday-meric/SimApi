@@ -2,8 +2,8 @@
 
 
 #Dossier de base
-dir=/simcam/data/video
-dir_timestamp=/simcam/data/temp_var
+dir=../data/video
+dir_timestamp=../data/temp_var
 filename="$dir_timestamp/timestamp.txt"
 date_log=$(date '+%d/%m/%Y %r')
 
@@ -84,11 +84,11 @@ do
    echo "$destVideo"|sed -e 's/ /%20/g'
    
    #Chemin de la destination et debug
-   destnext="https://cloud.aymeric-mai.fr/remote.php/dav/files/simon/Simon/Vidéos-Simon/$(echo "$annee")/Semaine-$semaine%20le%20$mois/$(echo "$destVideo"|sed -e 's/ /%20/g')"
+   destnext="$(echo "$url_nextcloud")remote.php/dav/files/$(echo "$login")/$(echo "$directory")$(echo "$annee")/Semaine-$semaine%20le%20$mois/$(echo "$destVideo"|sed -e 's/ /%20/g')"
    
 
    #Execution de la commande de transfert
-   log=$(curl -u $login:$password -T "$video" "https://cloud.aymeric-mai.fr/remote.php/dav/files/simon/Simon/Vidéos-Simon/$(echo "$annee")/Semaine-$semaine%20le%20$mois/$(echo "$destVideo"|sed -e 's/ /%20/g')")
+   log=$(curl -u $login:$password -T "$video" "$(echo "$url_nextcloud")remote.php/dav/files/$(echo "$login")/$(echo "$directory")$(echo "$annee")/Semaine-$semaine%20le%20$mois/$(echo "$destVideo"|sed -e 's/ /%20/g')")
    echo $log
    
    #Debug
