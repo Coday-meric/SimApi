@@ -179,7 +179,7 @@ class Rec:
         self.time_limit = time_limit
 
         # Démarrage VLC
-        cmdbase = 'libcamera-vid --rotation ' + rotate + ' --nopreview -t ' + self.time_limit + ' --codec libav -o ' + self.file_source + ' --framerate ' + framerate + ' --width ' + width + ' --height ' + height + ' --profile ' + profile + ' --level ' + level + ' --bitrate ' + bitrate_vid + ' -n --libav-audio --audio-source alsa --audio-device default --audio-bitrate ' + bitrate_aud + ''
+        cmdbase = 'libcamera-vid --rotation ' + str(rotate) + ' --nopreview -t ' + self.time_limit + ' --codec libav -o ' + self.file_source + ' --framerate ' + str(framerate) + ' --width ' + str(width) + ' --height ' + str(height) + ' --profile ' + profile + ' --level ' + level + ' --bitrate ' + str(bitrate_vid) + ' -n --libav-audio --audio-source alsa --audio-device default --audio-bitrate ' + str(bitrate_aud) + ''
         process = subprocess.Popen(cmdbase, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True,
                                    preexec_fn=os.setsid)
         # Stockage du PID
