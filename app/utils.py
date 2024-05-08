@@ -21,7 +21,7 @@ class Setup:
         # Create table of db
         con = sqlite3.connect(self.dburl)
         cur = con.cursor()
-        cur.execute('''CREATE TABLE IF NOT EXISTS setup_simcloud(
+        cur.execute('''CREATE TABLE IF NOT EXISTS setup_simcam(
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                 rotate INTEGER,
                 framerate INTEGER,
@@ -32,7 +32,7 @@ class Setup:
                 bitrate_vid INTEGER,
                 bitrate_aud INTEGER
             )''')
-        cur.execute('''CREATE TABLE IF NOT EXISTS setup_simcam(
+        cur.execute('''CREATE TABLE IF NOT EXISTS setup_simcloud(
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
                 login TEXT,
                 password TEXT,
@@ -47,7 +47,6 @@ class Setup:
         message = "Configuration camera saved successfully"
         try:
             self.create_db()
-
             con = sqlite3.connect(self.dburl)
             cur = con.cursor()
             cur.execute("SELECT id FROM setup_simcam")
@@ -57,7 +56,7 @@ class Setup:
                 cur.execute("DELETE FROM setup_simcam")
                 con.commit()
             donnees = (rotate, framerate, width, height, profile, level, bitrate_vid, bitrate_aud)
-            cur.execute("INSERT INTO setup (rotate, framerate, width, height, profile, level, bitrate_vid, bitrate_aud) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", donnees)
+            cur.execute("INSERT INTO setup_simcam (rotate, framerate, width, height, profile, level, bitrate_vid, bitrate_aud) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", donnees)
             con.commit()
             con.close()
         except sqlite3.Error as error:
@@ -70,10 +69,8 @@ class Setup:
     def setup_simcloud(self, login, password, directory, url_nextcloud):
         status = True
         message = "Configuration cloud saved successfully"
-
         try:
             self.create_db()
-
             con = sqlite3.connect(self.dburl)
             cur = con.cursor()
             cur.execute("SELECT id FROM setup_simcloud")
@@ -83,7 +80,7 @@ class Setup:
                 cur.execute("DELETE FROM setup_simcloud")
                 con.commit()
             donnees = (login, password, directory, url_nextcloud)
-            cur.execute("INSERT INTO setup (login, password, directory, url_nextcloud) VALUES (?, ?, ?, ?)", donnees)
+            cur.execute("INSERT INTO setup_simcloud (login, password, directory, url_nextcloud) VALUES (?, ?, ?, ?)", donnees)
             con.commit()
             con.close()
         except sqlite3.Error as error:
@@ -97,7 +94,7 @@ class Setup:
             self.create_db()
             con = sqlite3.connect(self.dburl)
             cur = con.cursor()
-            cur.execute("SELECT * FROM setup")
+            cur.execute("SELECT * FROM setup_simcloud")
             data = cur.fetchone()
             con.commit()
             con.close()
@@ -121,7 +118,7 @@ class Setup:
             self.create_db()
             con = sqlite3.connect(self.dburl)
             cur = con.cursor()
-            cur.execute("SELECT * FROM setup")
+            cur.execute("SELECT * FROM setup_simcam")
             data = cur.fetchone()
             con.commit()
             con.close()
